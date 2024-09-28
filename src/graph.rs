@@ -1,3 +1,5 @@
+use std::iter::zip;
+
 #[derive(Clone, Debug)]
 enum Dfs<Idx> {
     Pre(Idx),
@@ -12,6 +14,10 @@ pub trait Graph {
     fn edges(&self, i: Self::Idx) -> Vec<(Self::Idx, Self::Cost)>;
     fn idx_to_usize(&self, i: Self::Idx) -> usize;
 
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     fn dfs<D: Clone, F, G>(&self, init: (Self::Idx, D), mut pre_order: F, mut post_order: G)
     where
         F: FnMut(&Self::Idx, &Self::Idx, &Self::Cost, &D) -> Option<D>,
@@ -22,8 +28,7 @@ pub trait Graph {
             (Dfs::Post(init.0.clone()), init.1.clone()),
             (Dfs::Pre(init.0.clone()), init.1.clone()),
         ];
-        while !stk.is_empty() {
-            let (idx, data) = stk.pop().unwrap();
+        while let Some((idx, data)) = stk.pop() {
             match idx {
                 Dfs::Pre(idx) => {
                     done[self.idx_to_usize(idx.clone())] = true;
@@ -53,14 +58,14 @@ pub struct UnweightedGraph {
 
 impl Graph for UnweightedGraph {
     type Idx = usize;
-    type Cost = ();
+    type Cost = usize;
 
     fn len(&self) -> usize {
         self.n
     }
 
     fn edges(&self, i: Self::Idx) -> Vec<(Self::Idx, Self::Cost)> {
-        self.g[i].iter().map(|&i| (i, ())).collect()
+        self.g[i].iter().map(|&i| (i, 1)).collect()
     }
 
     fn idx_to_usize(&self, i: Self::Idx) -> usize {
@@ -87,5 +92,61 @@ impl<Cost: Clone> Graph for WeightedGraph<Cost> {
 
     fn idx_to_usize(&self, i: Self::Idx) -> usize {
         i
+    }
+}
+#[derive(Debug)]
+pub struct Grid {
+    pub is_8way: bool,
+    pub h: usize,
+    pub w: usize,
+    pub g: Vec<Vec<bool>>,
+}
+
+impl Graph for Grid {
+    type Idx = (usize, usize);
+    type Cost = usize;
+
+    fn len(&self) -> usize {
+        self.h * self.w
+    }
+
+    fn edges(&self, i: Self::Idx) -> Vec<(Self::Idx, Self::Cost)> {
+        if self.is_8way {
+            const DX: [i32; 8] = [-1, -1, -1, 0, 0, 1, 1, 1];
+            const DY: [i32; 8] = [-1, 0, 1, -1, 1, -1, 0, 1];
+            let mut ret = vec![];
+            for (dx, dy) in zip(DX, DY) {
+                let nx = ((i.0 as i32) + dx).try_into();
+                let ny = ((i.1 as i32) + dy).try_into();
+                if let Ok(nx) = nx {
+                    if let Ok(ny) = ny {
+                        if nx < self.h && ny < self.w {
+                            ret.push(((nx, ny), 1));
+                        }
+                    }
+                }
+            }
+            ret
+        } else {
+            const DX: [i32; 4] = [-1, 0, 0, 1];
+            const DY: [i32; 4] = [0, -1, 1, 0];
+            let mut ret = vec![];
+            for (dx, dy) in zip(DX, DY) {
+                let nx = ((i.0 as i32) + dx).try_into();
+                let ny = ((i.1 as i32) + dy).try_into();
+                if let Ok(nx) = nx {
+                    if let Ok(ny) = ny {
+                        if nx < self.h && ny < self.w {
+                            ret.push(((nx, ny), 1));
+                        }
+                    }
+                }
+            }
+            ret
+        }
+    }
+
+    fn idx_to_usize(&self, i: Self::Idx) -> usize {
+        i.0 * self.h + i.1
     }
 }
