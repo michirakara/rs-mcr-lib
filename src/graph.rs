@@ -116,11 +116,11 @@ impl Graph for Grid {
             const DY: [i32; 8] = [-1, 0, 1, -1, 1, -1, 0, 1];
             let mut ret = vec![];
             for (dx, dy) in zip(DX, DY) {
-                let nx = ((i.0 as i32) + dx).try_into();
-                let ny = ((i.1 as i32) + dy).try_into();
-                if let Ok(nx) = nx {
-                    if let Ok(ny) = ny {
-                        if nx < self.h && ny < self.w {
+                let nx: Option<usize> = ((i.0 as i32) + dx).try_into().ok();
+                let ny: Option<usize> = ((i.1 as i32) + dy).try_into().ok();
+                if let Some(nx) = nx {
+                    if let Some(ny) = ny {
+                        if nx < self.h && ny < self.w && !self.g[nx][ny] {
                             ret.push(((nx, ny), 1));
                         }
                     }
@@ -132,11 +132,11 @@ impl Graph for Grid {
             const DY: [i32; 4] = [0, -1, 1, 0];
             let mut ret = vec![];
             for (dx, dy) in zip(DX, DY) {
-                let nx = ((i.0 as i32) + dx).try_into();
-                let ny = ((i.1 as i32) + dy).try_into();
-                if let Ok(nx) = nx {
-                    if let Ok(ny) = ny {
-                        if nx < self.h && ny < self.w {
+                let nx: Option<usize> = ((i.0 as i32) + dx).try_into().ok();
+                let ny: Option<usize> = ((i.1 as i32) + dy).try_into().ok();
+                if let Some(nx) = nx {
+                    if let Some(ny) = ny {
+                        if nx < self.h && ny < self.w && !self.g[nx][ny] {
                             ret.push(((nx, ny), 1));
                         }
                     }
