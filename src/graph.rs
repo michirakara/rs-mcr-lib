@@ -12,7 +12,6 @@ pub trait Graph {
 
     fn len(&self) -> usize;
     fn edges(&self, i: Self::Idx) -> Vec<(Self::Idx, Self::Cost)>;
-    fn idx_to_usize(&self, i: Self::Idx) -> usize;
 
     fn is_empty(&self) -> bool {
         self.len() == 0
@@ -23,7 +22,6 @@ pub trait Graph {
         F: FnMut(&Self::Idx, &Self::Idx, &Self::Cost, &D) -> Option<D>,
         G: FnMut(&Self::Idx, &D),
     {
-        let mut done = vec![false; self.len()];
         let mut stk = vec![
             (Dfs::Post(init.0.clone()), init.1.clone()),
             (Dfs::Pre(init.0.clone()), init.1.clone()),
@@ -31,11 +29,7 @@ pub trait Graph {
         while let Some((idx, data)) = stk.pop() {
             match idx {
                 Dfs::Pre(idx) => {
-                    done[self.idx_to_usize(idx.clone())] = true;
                     for (nidx, cost) in self.edges(idx.clone()) {
-                        if done[self.idx_to_usize(nidx.clone())] {
-                            continue;
-                        }
                         let ndata = pre_order(&idx, &nidx, &cost, &data);
                         if let Some(ndata) = ndata {
                             stk.push((Dfs::Post(nidx.clone()), ndata.clone()));
@@ -67,10 +61,6 @@ impl Graph for UnweightedGraph {
     fn edges(&self, i: Self::Idx) -> Vec<(Self::Idx, Self::Cost)> {
         self.g[i].iter().map(|&i| (i, 1)).collect()
     }
-
-    fn idx_to_usize(&self, i: Self::Idx) -> usize {
-        i
-    }
 }
 #[derive(Debug)]
 pub struct WeightedGraph<Cost> {
@@ -88,10 +78,6 @@ impl<Cost: Clone> Graph for WeightedGraph<Cost> {
 
     fn edges(&self, i: Self::Idx) -> Vec<(Self::Idx, Self::Cost)> {
         self.g[i].clone()
-    }
-
-    fn idx_to_usize(&self, i: Self::Idx) -> usize {
-        i
     }
 }
 #[derive(Debug)]
@@ -111,6 +97,9 @@ impl Graph for Grid {
     }
 
     fn edges(&self, i: Self::Idx) -> Vec<(Self::Idx, Self::Cost)> {
+        if !self.g[i.0][i.1] {
+            return Vec::new();
+        }
         if self.is_8way {
             const DX: [i32; 8] = [-1, -1, -1, 0, 0, 1, 1, 1];
             const DY: [i32; 8] = [-1, 0, 1, -1, 1, -1, 0, 1];
@@ -120,7 +109,7 @@ impl Graph for Grid {
                 let ny: Option<usize> = ((i.1 as i32) + dy).try_into().ok();
                 if let Some(nx) = nx {
                     if let Some(ny) = ny {
-                        if nx < self.h && ny < self.w && !self.g[nx][ny] {
+                        if nx < self.h && ny < self.w && self.g[nx][ny] {
                             ret.push(((nx, ny), 1));
                         }
                     }
@@ -136,7 +125,7 @@ impl Graph for Grid {
                 let ny: Option<usize> = ((i.1 as i32) + dy).try_into().ok();
                 if let Some(nx) = nx {
                     if let Some(ny) = ny {
-                        if nx < self.h && ny < self.w && !self.g[nx][ny] {
+                        if nx < self.h && ny < self.w && self.g[nx][ny] {
                             ret.push(((nx, ny), 1));
                         }
                     }
@@ -144,9 +133,5 @@ impl Graph for Grid {
             }
             ret
         }
-    }
-
-    fn idx_to_usize(&self, i: Self::Idx) -> usize {
-        i.0 * self.h + i.1
     }
 }
