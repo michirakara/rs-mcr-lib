@@ -83,7 +83,7 @@ where
         self.find(x);
         self.diff_weight[x].clone()
     }
-    /// `weight(x) == weight(y) + w`
+    /// `weight(x) + y == weight(y)`
     pub fn merge(&mut self, x: usize, y: usize, mut w: T::Set) -> bool {
         w = T::op(w, self.weight(x));
         w = T::op(w, T::inv(self.weight(y)));
