@@ -84,13 +84,13 @@ where
         self.diff_weight[x].clone()
     }
     /// `weight(x) == weight(y) + w`
-    pub fn merge(&mut self, x: usize, y: usize, mut w: T::Set) {
+    pub fn merge(&mut self, x: usize, y: usize, mut w: T::Set) -> bool {
         w = T::op(w, self.weight(x));
         w = T::op(w, T::inv(self.weight(y)));
         let mut x = self.find(x);
         let mut y = self.find(y);
         if x == y {
-            return;
+            return false;
         }
         if self.size[x] < self.size[y] {
             std::mem::swap(&mut x, &mut y);
@@ -99,6 +99,7 @@ where
         self.size[x] += self.size[y];
         self.par[y] = self.par[x];
         self.diff_weight[y] = w;
+        true
     }
 
     pub fn size(&mut self, x: usize) -> usize {
@@ -109,8 +110,13 @@ where
     pub fn same(&mut self, x: usize, y: usize) -> bool {
         self.find(x) == self.find(y)
     }
-    /// weight(y) - weight(x)
-    pub fn diff(&mut self, x: usize, y: usize) -> T::Set {
-        T::op(self.weight(y), T::inv(self.weight(x)))
+    /// `Some(weight(y) - weight(x))`
+    /// 繋がってないなら `None`
+    pub fn diff(&mut self, x: usize, y: usize) -> Option<T::Set> {
+        if self.same(x, y) {
+            Some(T::op(self.weight(y), T::inv(self.weight(x))))
+        } else {
+            None
+        }
     }
 }
