@@ -82,7 +82,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rs-mcr-lib"
+name = "rs_mcr_lib"
 version = "0.1.0"
 dependencies = [
  "num",
